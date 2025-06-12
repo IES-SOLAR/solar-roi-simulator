@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedded Solar ROI Simulator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font and overall aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .container {
+            max-width: 90%;
+            margin: auto;
+        }
+        /* Custom styling for inputs and buttons for a modern look */
+        input[type="number"] {
+            border-radius: 0.5rem; /* rounded corners */
+            padding: 0.75rem;
+            border: 1px solid #d1d5db; /* light gray border */
+            width: 100%;
+        }
+        button {
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600; /* semi-bold */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="container bg-white shadow-xl rounded-xl p-8 md:p-12 lg:p-16 flex flex-col lg:flex-row gap-8 lg:gap-12 w-full max-w-7xl">
+        <!-- Simulator Input Section -->
+        <div class="lg:w-1/2">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-8 text-center lg:text-left">Solar ROI Simulator</h1>
+            <p class="text-gray-600 mb-8 leading-relaxed">
+                Estimate the Return on Investment for your embedded solar system.
+                Enter your system's details below to see the potential savings and payback period.
+            </p>
+
+            <div class="space-y-6">
+                <!-- System Size -->
+                <div>
+                    <label for="systemSize" class="block text-sm font-medium text-gray-700 mb-2">System Size (kW)</label>
+                    <input type="number" id="systemSize" value="5" min="1" step="0.1" class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-md sm:text-sm border-gray-300">
+                </div>
+
+                <!-- Installation Cost -->
+                <div>
+                    <label for="installationCost" class="block text-sm font-medium text-gray-700 mb-2">Installation Cost ($/kW)</label>
+                    <input type="number" id="installationCost" value="1500" min="100" step="10" class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-md sm:text-sm border-gray-300">
+                </div>
+
+                <!-- Electricity Price -->
+                <div>
+                    <label for="electricityPrice" class="block text-sm font-medium text-gray-700 mb-2">Current Electricity Price ($/kWh)</label>
+                    <input type="number" id="electricityPrice" value="0.25" min="0.01" step="0.01" class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-md sm:text-sm border-gray-300">
+                </div>
+
+                <!-- Annual Solar Generation -->
+                <div>
+                    <label for="solarGeneration" class="block text-sm font-medium text-gray-700 mb-2">Annual Solar Generation (kWh/kW/year)</label>
+                    <input type="number" id="solarGeneration" value="1300" min="500" step="10" class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-md sm:text-sm border-gray-300">
+                </div>
+
+                <!-- Electricity Price Inflation Rate -->
+                <div>
+                    <label for="inflationRate" class="block text-sm font-medium text-gray-700 mb-2">Annual Electricity Price Inflation Rate (%)</label>
+                    <input type="number" id="inflationRate" value="3" min="0" step="0.1" class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-md sm:text-sm border-gray-300">
+                </div>
+
+                <!-- System Degradation Rate -->
+                <div>
+                    <label for="degradationRate" class="block text-sm font-medium text-gray-700 mb-2">Annual System Degradation Rate (%)</label>
+                    <input type="number" id="degradationRate" value="0.5" min="0" step="0.1" class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-md sm:text-sm border-gray-300">
+                </div>
+
+                <!-- Project Lifespan -->
+                <div>
+                    <label for="projectLifespan" class="block text-sm font-medium text-gray-700 mb-2">Project Lifespan (Years)</label>
+                    <input type="number" id="projectLifespan" value="25" min="5" step="1" class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-md sm:text-sm border-gray-300">
+                </div>
+
+                <!-- Annual Maintenance Cost -->
+                <div>
+                    <label for="maintenanceCost" class="block text-sm font-medium text-gray-700 mb-2">Annual Maintenance Cost (% of Initial Cost)</label>
+                    <input type="number" id="maintenanceCost" value="0.5" min="0" step="0.1" class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-md sm:text-sm border-gray-300">
+                </div>
+
+                <!-- Calculate Button -->
+                <button id="calculateBtn" class="w-full bg-blue-600 text-white py-3 rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 ease-in-out">
+                    Calculate ROI
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Display Section -->
+        <div class="lg:w-1/2 bg-blue-50 p-8 rounded-lg shadow-inner flex flex-col justify-center">
+            <h2 class="text-3xl font-bold text-blue-800 mb-6 text-center">Your ROI Estimate</h2>
+            <div id="results" class="space-y-4 text-gray-700">
+                <p class="text-lg"><span class="font-semibold text-blue-700">Initial Investment:</span> <span id="initialInvestmentResult">$0.00</span></p>
+                <p class="text-lg"><span class="font-semibold text-blue-700">Total Savings Over Lifespan:</span> <span id="totalSavingsResult">$0.00</span></p>
+                <p class="text-lg"><span class="font-semibold text-blue-700">Net Profit:</span> <span id="netProfitResult">$0.00</span></p>
+                <p class="text-lg"><span class="font-semibold text-blue-700">Payback Period:</span> <span id="paybackPeriodResult">N/A</span></p>
+                <div id="annualSavingsChart" class="mt-8">
+                    <h3 class="text-xl font-semibold text-blue-700 mb-4 text-center">Projected Annual Savings</h3>
+                    <canvas id="savingsChart" class="w-full h-64"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js CDN for plotting results -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Get references to input elements
+        const systemSizeInput = document.getElementById('systemSize');
+        const installationCostInput = document.getElementById('installationCost');
+        const electricityPriceInput = document.getElementById('electricityPrice');
+        const solarGenerationInput = document.getElementById('solarGeneration');
+        const inflationRateInput = document.getElementById('inflationRate');
+        const degradationRateInput = document.getElementById('degradationRate');
+        const projectLifespanInput = document.getElementById('projectLifespan');
+        const maintenanceCostInput = document.getElementById('maintenanceCost');
+        const calculateBtn = document.getElementById('calculateBtn');
+
+        // Get references to result display elements
+        const initialInvestmentResult = document.getElementById('initialInvestmentResult');
+        const totalSavingsResult = document.getElementById('totalSavingsResult');
+        const netProfitResult = document.getElementById('netProfitResult');
+        const paybackPeriodResult = document.getElementById('paybackPeriodResult');
+        const savingsChartCanvas = document.getElementById('savingsChart');
+        let savingsChart; // To hold the Chart.js instance
+
+        /**
+         * Calculates the ROI for an embedded solar system based on user inputs.
+         * @returns {Object} An object containing initial investment, total savings, net profit, payback period, and annual savings data.
+         */
+        function calculateROI() {
+            // Retrieve input values, converting them to numbers
+            const systemSize = parseFloat(systemSizeInput.value); // kW
+            const installationCostPerKw = parseFloat(installationCostInput.value); // $/kW
+            let currentElectricityPrice = parseFloat(electricityPriceInput.value); // $/kWh
+            const annualSolarGenerationPerKw = parseFloat(solarGenerationInput.value); // kWh/kW/year
+            const inflationRate = parseFloat(inflationRateInput.value) / 100; // Convert % to decimal
+            const degradationRate = parseFloat(degradationRateInput.value) / 100; // Convert % to decimal
+            const projectLifespan = parseInt(projectLifespanInput.value); // Years
+            const annualMaintenanceCostRate = parseFloat(maintenanceCostInput.value) / 100; // Convert % to decimal
+
+            // Calculate initial investment
+            const initialInvestment = systemSize * installationCostPerKw;
+            const annualMaintenanceCostInitial = initialInvestment * annualMaintenanceCostRate;
+
+            let totalSavings = 0;
+            let cumulativeCost = initialInvestment;
+            let cumulativeSavings = 0;
+            let paybackPeriod = 'N/A';
+            const annualSavingsData = [];
+            const chartLabels = [];
+
+            let currentSolarGeneration = systemSize * annualSolarGenerationPerKw;
+
+            // Loop through each year of the project lifespan
+            for (let year = 1; year <= projectLifespan; year++) {
+                // Adjust electricity price for inflation
+                const effectiveElectricityPrice = currentElectricityPrice * (1 + inflationRate)**(year - 1);
+
+                // Adjust solar generation for degradation
+                const effectiveSolarGeneration = currentSolarGeneration * (1 - degradationRate)**(year - 1);
+
+                // Calculate annual savings for the current year
+                const annualSavings = effectiveSolarGeneration * effectiveElectricityPrice;
+
+                // Calculate annual maintenance cost (assumed to be fixed or scale with initial cost, here fixed percentage of initial investment)
+                const annualMaintenanceCost = annualMaintenanceCostInitial;
+
+                // Calculate net annual savings (savings minus maintenance)
+                const netAnnualSavings = annualSavings - annualMaintenanceCost;
+
+                totalSavings += netAnnualSavings;
+                cumulativeSavings += netAnnualSavings;
+                annualSavingsData.push(netAnnualSavings);
+                chartLabels.push(`Year ${year}`);
+
+                // Check for payback period
+                if (paybackPeriod === 'N/A' && cumulativeSavings >= initialInvestment) {
+                    // Simple payback period calculation:
+                    // If cumulative savings at current year are already >= initial investment,
+                    // we found the year. For more precision, we can interpolate within the year.
+                    // This approximation is sufficient for a general simulator.
+                    const previousCumulativeSavings = cumulativeSavings - netAnnualSavings;
+                    paybackPeriod = (year - 1) + ((initialInvestment - previousCumulativeSavings) / netAnnualSavings);
+                }
+            }
+
+            // Calculate net profit
+            const netProfit = totalSavings - initialInvestment;
+
+            return {
+                initialInvestment: initialInvestment,
+                totalSavings: totalSavings,
+                netProfit: netProfit,
+                paybackPeriod: typeof paybackPeriod === 'number' ? paybackPeriod.toFixed(2) + ' years' : 'N/A',
+                annualSavingsData: annualSavingsData,
+                chartLabels: chartLabels
+            };
+        }
+
+        /**
+         * Displays the calculated ROI results in the designated HTML elements.
+         * Also updates the chart with annual savings data.
+         * @param {Object} results - The results object from calculateROI.
+         */
+        function displayResults(results) {
+            initialInvestmentResult.textContent = `$${results.initialInvestment.toFixed(2)}`;
+            totalSavingsResult.textContent = `$${results.totalSavings.toFixed(2)}`;
+            netProfitResult.textContent = `$${results.netProfit.toFixed(2)}`;
+            paybackPeriodResult.textContent = results.paybackPeriod;
+
+            // Update or create the chart
+            if (savingsChart) {
+                savingsChart.data.labels = results.chartLabels;
+                savingsChart.data.datasets[0].data = results.annualSavingsData;
+                savingsChart.update();
+            } else {
+                savingsChart = new Chart(savingsChartCanvas, {
+                    type: 'bar', // Bar chart for annual savings
+                    data: {
+                        labels: results.chartLabels,
+                        datasets: [{
+                            label: 'Net Annual Savings ($)',
+                            data: results.annualSavingsData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)', // Tailwind blue-500 with transparency
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
+                            borderRadius: 5 // Rounded bars
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, // Allow canvas to resize based on container
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Net Savings ($)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return `$${value.toLocaleString()}`;
+                                    }
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Project Year',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += `$${context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Event listener for the calculate button
+        calculateBtn.addEventListener('click', () => {
+            const results = calculateROI();
+            displayResults(results);
+        });
+
+        // Initial calculation and display on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const results = calculateROI();
+            displayResults(results);
+        });
+
+    </script>
+</body>
+</html>
