@@ -101,8 +101,8 @@
             </div>
         </div>
 
-        <!-- Results Display Section -->
-        <div class="lg:w-1/2 bg-blue-50 p-8 rounded-lg shadow-inner flex flex-col justify-center">
+        <!-- Results Display Section - Removed justify-center -->
+        <div class="lg:w-1/2 bg-blue-50 p-8 rounded-lg shadow-inner flex flex-col max-h-screen overflow-y-auto">
             <h2 class="text-3xl font-bold text-blue-800 mb-6 text-center">Your ROI Estimate</h2>
             <div id="results" class="space-y-4 text-gray-700">
                 <p class="text-lg"><span class="font-semibold text-blue-700">Initial Investment:</span> <span id="initialInvestmentResult">$0.00</span></p>
@@ -111,7 +111,10 @@
                 <p class="text-lg"><span class="font-semibold text-blue-700">Payback Period:</span> <span id="paybackPeriodResult">N/A</span></p>
                 <div id="annualSavingsChart" class="mt-8">
                     <h3 class="text-xl font-semibold text-blue-700 mb-4 text-center">Projected Annual Savings</h3>
-                    <canvas id="savingsChart" class="w-full h-64"></canvas>
+                    <!-- Added a fixed height wrapper with relative positioning for the canvas -->
+                    <div class="relative w-full h-64">
+                        <canvas id="savingsChart" class="absolute inset-0"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -225,82 +228,81 @@
             netProfitResult.textContent = `$${results.netProfit.toFixed(2)}`;
             paybackPeriodResult.textContent = results.paybackPeriod;
 
-            // Update or create the chart
+            // Destroy existing chart instance if it exists
             if (savingsChart) {
-                savingsChart.data.labels = results.chartLabels;
-                savingsChart.data.datasets[0].data = results.annualSavingsData;
-                savingsChart.update();
-            } else {
-                savingsChart = new Chart(savingsChartCanvas, {
-                    type: 'bar', // Bar chart for annual savings
-                    data: {
-                        labels: results.chartLabels,
-                        datasets: [{
-                            label: 'Net Annual Savings ($)',
-                            data: results.annualSavingsData,
-                            backgroundColor: 'rgba(59, 130, 246, 0.6)', // Tailwind blue-500 with transparency
-                            borderColor: 'rgba(59, 130, 246, 1)',
-                            borderWidth: 1,
-                            borderRadius: 5 // Rounded bars
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false, // Allow canvas to resize based on container
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Net Savings ($)',
-                                    font: {
-                                        size: 14,
-                                        weight: 'bold'
-                                    }
-                                },
-                                ticks: {
-                                    callback: function(value) {
-                                        return `$${value.toLocaleString()}`;
-                                    }
+                savingsChart.destroy();
+            }
+
+            // Create a new chart instance
+            savingsChart = new Chart(savingsChartCanvas, {
+                type: 'bar', // Bar chart for annual savings
+                data: {
+                    labels: results.chartLabels,
+                    datasets: [{
+                        label: 'Net Annual Savings ($)',
+                        data: results.annualSavingsData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)', // Tailwind blue-500 with transparency
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 5 // Rounded bars
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Allows canvas to resize based on container dimensions
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Net Savings ($)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
                                 }
                             },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Project Year',
-                                    font: {
-                                        size: 14,
-                                        weight: 'bold'
-                                    }
+                            ticks: {
+                                callback: function(value) {
+                                    return `$${value.toLocaleString()}`;
                                 }
                             }
                         },
-                        plugins: {
-                            legend: {
+                        x: {
+                            title: {
                                 display: true,
-                                position: 'top',
-                                labels: {
-                                    font: {
-                                        size: 12
-                                    }
+                                text: 'Project Year',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
                                 }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        label += `$${context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                                        return label;
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
                                     }
+                                    label += `$${context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                                    return label;
                                 }
                             }
                         }
                     }
-                });
-            }
+                }
+            });
         }
 
         // Event listener for the calculate button
@@ -311,8 +313,11 @@
 
         // Initial calculation and display on page load
         document.addEventListener('DOMContentLoaded', () => {
-            const results = calculateROI();
-            displayResults(results);
+            // Delay the initial chart rendering slightly to allow DOM to settle
+            setTimeout(() => {
+                const results = calculateROI();
+                displayResults(results);
+            }, 100); // 100ms delay
         });
 
     </script>
